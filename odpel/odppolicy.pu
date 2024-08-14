@@ -1,0 +1,68 @@
+@startuml
+set namespaceSeparator .
+
+
+class odppolicy.Rule <<abstract>> {
+}
+
+
+class odppolicy.Behaviour <<abstract>> {
+}
+
+
+class odppolicy.Policy  {
+  name : ID
+  type : ID
+}
+
+
+class odppolicy.PolicySettingBehaviour  {
+  policy_setting_role : ID
+}
+
+
+class odppolicy.PolicyEnvelope  {
+}
+
+
+class odppolicy.EnvelopeRule  {
+  type : EnvelopeRuleType
+}
+
+
+class odppolicy.PolicyValue <<abstract>> {
+}
+
+
+class odppolicy.NumberInterval  {
+  from : NUMBER
+  to : NUMBER
+}
+
+
+class odppolicy.Duration  {
+  value : NUMBER
+  unit : DurationUnit
+}
+
+
+odppolicy.Rule <|-- odppolicy.Policy
+odppolicy.Rule <|-- odppolicy.PolicyEnvelope
+odppolicy.Rule <|-- odppolicy.PolicyValue
+odppolicy.Behaviour <|-- odppolicy.PolicySettingBehaviour
+odppolicy.Policy *--> odppolicy.PolicySettingBehaviour: setting_behaviour
+odppolicy.Policy *--> odppolicy.PolicyValue: initial_value
+odppolicy.Policy *--> odppolicy.PolicyEnvelope: envelope
+odppolicy.PolicyEnvelope *--> odppolicy.EnvelopeRule: envelope_rules 1..*
+odppolicy.EnvelopeRule *--> odppolicy.PolicyValue: values 1..*
+odppolicy.PolicyValue <|-- odppolicy.Duration
+odppolicy.PolicyValue <|-- odppolicy.NumberInterval
+
+legend
+  Match rules:
+  |= Name  |= Rule details |
+  | EnvelopeRuleType | one\|set\|list |
+  | DurationUnit | minutes\?\|hours\?\|days\?\|weeks\?\|months\?\|years\? |
+end legend
+
+@enduml

@@ -1,0 +1,320 @@
+@startuml
+set namespaceSeparator .
+
+
+class odpel.Model  {
+}
+
+
+class odpel.EnterpriseObject <<abstract>> {
+}
+
+
+class odpel.ActiveEO <<abstract>> {
+}
+
+
+class odpel.Party  {
+  name : ID
+}
+
+
+class odpel.Community  {
+  contract : optional<BOOL>
+  name : ID
+  objective : STRING
+}
+
+
+class odpel.Import  {
+  name : ID
+}
+
+
+class odpel.RoleFulfillment  {
+}
+
+
+class odpel.TokenAlias  {
+  name : ID
+  imported_name : ID
+}
+
+
+class odpel.PolicyEnvelopeConfig  {
+  policy : ID
+}
+
+
+class odpel.Artifact  {
+  name : ID
+}
+
+
+class odpel.Property  {
+  name : ID
+  type : ID
+}
+
+
+class odpel.Enum  {
+  name : ID
+  variants : optional<list[ID]>
+}
+
+
+class odpel.Event  {
+  name : ID
+}
+
+
+class odpel.CommunityRole  {
+  name : ID
+  description : STRING
+}
+
+
+class odpel.Action <<abstract>> {
+}
+
+
+class odpel.BasicAction  {
+  name : ID
+}
+
+
+class odpel.ActionCall  {
+  role : ID
+  action : ID
+  arguments : optional<list[ID]>
+}
+
+
+class odpel.SpeechAct  {
+  name : ID
+}
+
+
+class odpel.Authorization  {
+  name : ID
+}
+
+
+class odpel.Delegation  {
+  token_type : DelegatedToken
+  token_name : ID
+}
+
+
+class odpel.Declaration  {
+  name : ID
+}
+
+
+class odpel.Parameter  {
+  name : ID
+}
+
+
+class odpel.Type  {
+  set : optional<BOOL>
+}
+
+
+class odpel.SimpleType  {
+  name : ID
+}
+
+
+class odpel.BaseType <<abstract>> {
+}
+
+
+class odpel.Events  {
+}
+
+
+class odpel.DeonticToken <<abstract>> {
+}
+
+
+class odpel.Embargo  {
+  name : ID
+}
+
+
+class odpel.Burden  {
+  name : ID
+}
+
+
+class odpel.Permit  {
+  name : ID
+}
+
+
+class odpel.Guard  {
+  condition : Condition
+}
+
+
+class odpel.EventExpression  {
+}
+
+
+class odpel.AndExpression  {
+}
+
+
+class odpel.PrimaryExpression  {
+}
+
+
+class odppolicy.Rule <<abstract>> {
+}
+
+
+class odppolicy.Behaviour <<abstract>> {
+}
+
+
+class odppolicy.Policy  {
+  name : ID
+  type : ID
+}
+
+
+class odppolicy.PolicySettingBehaviour  {
+  policy_setting_role : ID
+}
+
+
+class odppolicy.PolicyEnvelope  {
+}
+
+
+class odppolicy.EnvelopeRule  {
+  type : EnvelopeRuleType
+}
+
+
+class odppolicy.PolicyValue <<abstract>> {
+}
+
+
+class odppolicy.NumberInterval  {
+  from : NUMBER
+  to : NUMBER
+}
+
+
+class odppolicy.Duration  {
+  value : NUMBER
+  unit : DurationUnit
+}
+
+
+odpel.Model *--> odpel.SimpleType: simpleTypes 0..*
+odpel.Model *--> odpel.Community: communities 0..*
+odpel.EnterpriseObject <|-- odpel.ActiveEO
+odpel.EnterpriseObject <|-- odpel.DeonticToken
+odpel.ActiveEO <|-- odpel.Party
+odpel.Party o--> odpel.CommunityRole: fullfils_role
+odpel.Community *--> odpel.Import: imports 0..*
+odpel.Community *--> odpel.Events: events
+odpel.Community *--> odpel.Artifact: artifacts 0..*
+odpel.Community *--> odpel.CommunityRole: roles 0..*
+odpel.Community *--> odppolicy.Rule: rules 0..*
+odpel.Import o--> odpel.Community: importedCommunity
+odpel.Import *--> odpel.RoleFulfillment: role_fulfillment 0..*
+odpel.Import *--> odpel.TokenAlias: token_aliases 0..*
+odpel.Import *--> odpel.PolicyEnvelopeConfig: policyEnvelopeConfig 0..*
+odpel.RoleFulfillment o--> odpel.CommunityRole: role
+odpel.RoleFulfillment o--> odpel.CommunityRole: imported_role
+odpel.PolicyEnvelopeConfig *--> odppolicy.EnvelopeRule: envelope_rules 1..*
+odpel.Artifact o--> odpel.CommunityRole: parties 1..*
+odpel.Artifact *--> odpel.Property: properties 0..*
+odpel.Event *--> odpel.Parameter: artifacts 1..*
+odpel.CommunityRole *--> odpel.Action: actions 0..*
+odpel.CommunityRole *--> odpel.DeonticToken: tokens 0..*
+odpel.Action <|-- odpel.SpeechAct
+odpel.Action <|-- odpel.BasicAction
+odpel.Action <|-- odpel.Authorization
+odpel.Action <|-- odpel.Delegation
+odpel.Action <|-- odpel.Declaration
+odpel.BasicAction *--> odpel.Parameter: parameters 0..*
+odpel.BasicAction *--> odpel.Type: return_type
+odpel.BasicAction *--> odpel.Guard: guard
+odpel.BasicAction *--> odpel.ActionCall: calls 0..*
+odpel.BasicAction *--> odpel.Event: trigger_event
+odpel.SpeechAct *--> odpel.Parameter: parameters 0..*
+odpel.SpeechAct *--> odpel.Guard: guard
+odpel.SpeechAct *--> odpel.DeonticToken: tokens 0..*
+odpel.SpeechAct *--> odpel.Event: trigger_event
+odpel.Authorization *--> odpel.Parameter: parameters 0..*
+odpel.Authorization *--> odpel.Guard: guard
+odpel.Authorization *--> odpel.DeonticToken: tokens 0..*
+odpel.Authorization *--> odpel.Event: trigger_event
+odpel.Delegation *--> odpel.Parameter: parameters 0..*
+odpel.Delegation o--> odpel.CommunityRole: agent
+odpel.Delegation *--> odpel.Guard: guard
+odpel.Declaration *--> odpel.Parameter: parameters 0..*
+odpel.Declaration *--> odpel.Guard: guard
+odpel.Declaration *--> odpel.DeonticToken: tokens 0..*
+odpel.Declaration *--> odpel.Event: trigger_event
+odpel.Parameter *--> odpel.Type: type
+odpel.Type o--> odpel.BaseType: type
+odpel.BaseType <|-- odpel.SimpleType
+odpel.BaseType <|-- odpel.Artifact
+odpel.BaseType <|-- odpel.CommunityRole
+odpel.Events *--> odpel.Event: events 0..*
+odpel.DeonticToken <|-- odpel.Burden
+odpel.DeonticToken <|-- odpel.Permit
+odpel.DeonticToken <|-- odpel.Embargo
+odpel.Embargo *--> odpel.Parameter: parameters 0..*
+odpel.Embargo o--> odpel.CommunityRole: role
+odpel.Embargo *--> odpel.Guard: guard
+odpel.Embargo *--> odpel.Event: activation_trigger
+odpel.Embargo *--> odpel.EventExpression: finish_event
+odpel.Embargo *--> odpel.Guard: event_guard
+odpel.Burden *--> odpel.Parameter: parameters 0..*
+odpel.Burden o--> odpel.CommunityRole: role
+odpel.Burden *--> odpel.Guard: guard
+odpel.Burden *--> odpel.Event: activation_trigger
+odpel.Burden *--> odpel.EventExpression: finish_event
+odpel.Burden *--> odpel.Guard: event_guard
+odpel.Permit *--> odpel.Parameter: parameters 0..*
+odpel.Permit o--> odpel.CommunityRole: role
+odpel.Permit *--> odpel.Guard: guard
+odpel.Permit *--> odpel.Event: activation_trigger
+odpel.Permit *--> odpel.EventExpression: finish_event
+odpel.Permit *--> odpel.Guard: event_guard
+odpel.EventExpression *--> odpel.AndExpression: op 0..*
+odpel.AndExpression *--> odpel.PrimaryExpression: op 0..*
+odpel.PrimaryExpression *--> odpel.EventExpression: op
+odppolicy.Rule <|-- odppolicy.Policy
+odppolicy.Rule <|-- odppolicy.PolicyEnvelope
+odppolicy.Rule <|-- odppolicy.PolicyValue
+odppolicy.Behaviour <|-- odppolicy.PolicySettingBehaviour
+odppolicy.Policy *--> odppolicy.PolicySettingBehaviour: setting_behaviour
+odppolicy.Policy *--> odppolicy.PolicyValue: initial_value
+odppolicy.Policy *--> odppolicy.PolicyEnvelope: envelope
+odppolicy.PolicyEnvelope *--> odppolicy.EnvelopeRule: envelope_rules 1..*
+odppolicy.EnvelopeRule *--> odppolicy.PolicyValue: values 1..*
+odppolicy.PolicyValue <|-- odppolicy.Duration
+odppolicy.PolicyValue <|-- odppolicy.NumberInterval
+
+legend
+  Match rules:
+  |= Name  |= Rule details |
+  | Comment | #.* |
+  | DurationUnit | minutes\?\|hours\?\|days\?\|weeks\?\|months\?\|years\? |
+  | DelegatedToken | permit\|burden |
+  | Condition | \\([^)]*\\)\|[^\\]]* |
+  | EnvelopeRuleType | one\|set\|list |
+  | Agent | TODO |
+  | FQN | ID (. ID)* |
+  | TODO | this must be done |
+end legend
+
+@enduml
