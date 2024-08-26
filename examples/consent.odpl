@@ -1,0 +1,265 @@
+# Тhis is a generic consent community pattern.
+# It has the following roles:
+# Grantor -the individual whose personal data is being requested
+# Grantee - the individual or organization requesting access to data
+# plus, some supporting roles for consent management services, including
+# - IT specific roles with no direct accountability (e.g. monitor)
+# - policy specific roles which have accountability (e.g. consent policy maker)
+
+# actions by Grantee 
+# - submit data access request to Grantor
+# - clearly state purpose of accessing data (e.g. well-defined parameters in purpose attribute)
+# - comply with conditions stated by the Grantor 
+
+# actions by Grantor are 
+# - review and understand data access request details
+# - decide whether to grant or deny access (through giving permits)
+# - revoke (withdraw) access to their data at any time 
+
+# authorization, delegation, commitment, declaration and prescription are
+# special kind of speech acts, as per ODP-EL definitions and are used as keywords
+
+type string
+
+community contract genericConsent {
+   objective "Support consumers privacy consent preferences"
+   
+   # data requested by grantee
+   artifact ConsentRequestData {
+            grantor: Grantor
+            grantee: Grantee
+
+            subject: Subject
+
+            # purpose for which consent was requested by grantee (and given by grantor) 
+            purpose: string
+
+            # date of consent request 
+            dateRequested: date
+
+            # period of time  - may be dictated by a regulatory body 
+            period: duration
+   }
+
+   artifact ConsentRecord {
+        consentId: ID
+        consentRequest: ConsentRequestData
+        dateAgreed: date
+        grantorPreferences: GrantorPreferences
+   }
+
+   artifact Subject {
+        id: ID
+        name: string
+        birth_date: date
+   }
+
+   artifact GrantorPreferences {
+       accessMentalHealthInfo: bool
+       thirdPartySharing: bool
+   }
+
+   artifact Rule {}
+
+   role grantee {
+        # ConsentRequestData is a type of data used in generic consent actions/tokens to
+        # represent a given instance of a consent request (parameters defined in the artifact stucture)
+        
+        action consent_request(data: ConsentRequestData)
+               emits consent_requested(data: ConsentRequestData)
+   }
+    
+   role grantor {
+
+        action review_request(data: ConsentRequestData) [consent_requested(data)]
+               emits consent_reviewed(data: ConsentRequestData)
+
+        authorize give_consent(data: ConsentRequestData)
+            [consent_reviewed(data) && (now - data.subject.birth_date > legal_age)]
+        {
+            permit grant(consent: ConsentRecord) on grantee [this.time + permit_valid]
+
+            burden RespectPrivacy(consent: ConsentRecord) on grantee
+                triggered by grant_trigger
+                discharged by [this.time + privacy_valid]
+
+            burden StoreConsentRecord(consent: ConsentRecord) on consentAuthority
+                discharged by storeConsent(consent: ConsentRecord)
+        }
+            
+        declare withdraw_consent (consent: ConsentRecord) {}
+   }
+
+   # governance and policymaker roles are optonal
+   # their actions can be split into:
+   #   - basic actions of IT systems supporting humans, who have
+   #       legal responsility for their accountability actons
+   #   - speech acts, as they would have their own accountability actions, e.g.
+   #     committments to comply with governance rules, or prescripitions and
+   #     declarations to update rules for their domain of responsble
+   role governance {
+       burden monitorActions
+   }
+
+   role policyMaker {
+        # set<Rule> arrives from external sources (e.g. legal).
+
+        burden prescribeConsentRules(dataProtectionRules: set<Rule>)
+   }
+
+   # this is also an optional role  - as pr KER paper
+   role consentAuthority {
+
+       action storeConsent(consentRecord: ConsentRecord)
+
+       burden compliesWithDataProtectionRules (dataPotectionRules: set<Rule>)
+   }
+
+   policy grant_trigger: event {
+       policy setting by policyMaker
+       initial value event1
+       envelope {
+           one of [event1, event2]
+       }
+   }
+}
+
+
+# HealthCare community roles may include behaviour associated with GenericConsent
+# but Clinican role of that community include actions of grantee but many other, clinical actions
+# maybe we need to separate Care actions from consent actions but this becomes difficult
+# This means Clinician as a Party should fill both Carer roles and Grantee roles
+# Carer role can do ReviewCondition.
+
+community HealthCareConsent {
+    # TODO: Write objective
+    objective ""
+
+    # Importing and specializing consent authorization for HC community
+    # Clinician and Consumer instantiate grantee and grantor respectively.
+    # EHR (Electronic Health Record) with patient clinical data is different from consentRecord 
+    import genericConsent as consumerHealthConsent  
+           Clinician fulfills grantee               # healthcare provider
+           Consumer fulfills grantor                # healthcare consumer
+           AccessEHR as grant                       # alias for grant permit
+           grant_trigger.envelope = {
+                one of [observation_performed, emergency_arrival]
+           }
+
+    artifact Medication {
+        code: Code
+        ingredient: string
+        volume: integer
+        batch: string
+    }
+
+    artifact Recommendation {}
+
+    role Consumer {
+
+    }
+
+    role Clinician {
+        action reviewCondition(consumer: Consumer)
+            [AccessEHR(consentRecord)
+             && consentRecord.grantor == consumer]
+             emits observation_performed
+
+        action prescribeMedication(consumer: Consumer, medication: Medication)
+               [AccessEHR(consentRecord)
+                && respectPrivacy(consentRecord)
+                && consentRecord.grantor == consumer]
+
+        # invoke_service (serviceName, results) introduced for delegation of service option
+
+        # clinician provides an *authorisation* to a Recommender service
+        # this can be a Clinical Decision Support (CDS) Service - rule-based or ML options
+        # authorization is for CDS to access patient record and provide recommendation to Clinician
+        # Clinician then invokes this RecomemnderService - as they are *accountable*
+
+        # delegation clones the permit and assign it to delegate. Delegator can withdraw the permit
+        # at any time.
+        delegate permit AccessEHR(consentRecord: consumerHealthConsent.ConsentRecord) to RecommenderService
+                 [consentRecord.grantorPreferences.thirdPartySharing]
+
+        action invoke_service (service: RecommenderService, consumer: Consumer): set<Recommendation>
+        {
+            # Action is called from Clinician role because RecommenderService is not
+            # a natural person or some role which can decide to call "run" on its own.
+            # The only way to call "run" is by some active role (in this case Clinician).
+            service.run(consumer)
+        }
+    }
+
+    # This is amplified by invoke_service above which somehow calls run action in the service.
+    # not a decision maker
+    role RecommenderService {
+         description "Supports CDS style of recommendation based on the patient data."
+
+         action run(consumer: Consumer): set<Recommendation>
+            [AccessEHR(consentRecord)
+             && consentRecord.grantor == consumer]
+    }
+}
+
+community ClinicalResearchConsent {
+
+    # TODO: Write objective
+    objective ""
+
+    import genericConsent as ClinicalResearcherConsent
+           Researcher fulfills grantee
+           Subject fulfills grantor
+           AccessEHR as grant                       # alias for "grant" permit
+           grant_trigger.envelope = {
+                one of [observation_performed, emergency_arrival]
+           }
+
+    artifact IRBApprovalRequest {
+        study: string
+        purpose: string
+    }
+
+    role Subject {
+
+    }
+
+    role Researcher {
+        speech act getIRBapproval(request: IRBApprovalRequest) {
+            burden approveRequest(request: IRBApprovalRequest) on InstitutionalReviewBoard
+                   discharged by approve_request(request: IRBApprovalRequest)
+        }
+
+        action createInformedConsentDocument (purpose: string,
+                                              data_to_collect: set<string>, artifact_ICD: string)
+               [IRBApproval(request)]
+
+        action access_EHR(consent: ClinicalResearchConsent.ConsentRecord) [AccessEHR(consent)]
+
+        delegate permit AccessEHR(consentRecord: ConsentRecord) to AnalyticsService
+                 [consentRecord.grantorPreferences.thirdPartySharing]
+
+        action invoke_service (service: AnalyticsService, subjects: set<Subject>): set<Statistics>
+        {
+            service.run(subjects)
+        }
+
+        burden NoReIdentifySubjects
+
+    }
+
+    role InstitutionalReviewBoard {
+         authorize approve_request(request: IRBApprovalRequest) {
+            permit IRBApproval(request: IRBApprovalRequest) on Researcher
+         }
+    }
+
+    # not a decision maker - just a a service for Researcher
+    role AnalyticsService {
+        description "Supports analytics needed for statistics for research"
+
+        # Invoked by Researcher
+        action run(subjects: set<Subject>): set<Statistics>
+    }
+
+}
