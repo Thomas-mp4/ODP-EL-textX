@@ -22,7 +22,7 @@ Community:
     'community' contract?='contract' name=ID '{'
         'objective' objective=STRING
         imports*=Import
-        events=Events?
+        ('events' '{' events*=Event[','] '}')?
         artifacts*=Artifact
         roles*=CommunityRole
         rules*=Rule
@@ -158,11 +158,6 @@ BaseType:
     SimpleType | Artifact | CommunityRole
 ;
 
-Events:
-    'events' '{'
-        events*=Event[',']
-    '}'
-;
 Event: name=ID ('(' artifacts+=Parameter[','] ')')?;
 
 DeonticToken:
