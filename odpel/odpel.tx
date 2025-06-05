@@ -16,7 +16,9 @@ Party:
     'party' name=ID 'as' fullfils_role=[CommunityRole:FQN|^communities.roles]
 ;
 
-Agent: TODO;
+Agent: 
+    'agent' name=ID 'acts_for' principal = [Party:FQN]
+;
 
 Community:
     'community' contract?='contract' name=ID '{'
