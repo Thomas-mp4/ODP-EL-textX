@@ -64,7 +64,6 @@ Enum:
         variants*=ID
     '}'
 ;
-Event: TODO;
 
 CommunityRole:
     'role' name=ID '{'
