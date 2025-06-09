@@ -151,6 +151,7 @@ Type:
                          ^imports.~role_fulfillment.role]
 ;
 
+// TODO: Perhaps extend this to include a unit type (having a value, and a unit) -> unitType, Name, NameOfTheUnit, type of the quantity / value (INT,FLOAT, etc.)
 SimpleType:
     'type' name=ID
 ;
