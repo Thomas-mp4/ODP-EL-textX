@@ -195,7 +195,7 @@ Condition: /\([^)]*\)|[^\]]*/;
 
 EventExpression: op=AndExpression ('&' op=AndExpression)*;
 AndExpression: op=PrimaryExpression ('|' op=PrimaryExpression)*;
-PrimaryExpression: '(' op=EventExpression ')' | Event;
+PrimaryExpression: '(' op=EventExpression ')' | event=Event;
 
 
 Comment: /#.*/;
