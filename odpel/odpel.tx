@@ -113,7 +113,7 @@ Authorization:
 
 // [[pdf:../docs/DIS_15414_X.911.pdf::35++0.00][DIS_15414_X.911.pdf: Page 35]]
 Delegation:
-    'delegate' token_type=DelegatedToken token_name=ID ('(' parameters*=Parameter[','] ')')?
+    'delegate' name=ID token_type=DelegatedToken token_name=ID ('(' parameters*=Parameter[','] ')')?
     // Agent is community role in our language. In the standard it is a concept inherited from ActiveEO.
     // There is a link communmityRolefiller from CommunityRole to ActiveEO.
     // See [[pdf:../docs/DIS_15414_X.911.pdf::33++0.00][DIS_15414_X.911.pdf: Page 33]]
