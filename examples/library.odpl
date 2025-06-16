@@ -107,6 +107,17 @@ community contract libraryCommunity {
         speech act payFine(fine: Fine)
         [ fine.borrower == self ]
         { } emits FinePaid
+
+        # Delegate return burden to someone else
+        delegate return_item_delegation burden return_item(loan: Loan) to ProxyBorrower
+    }
+
+    role ProxyBorrower {
+    description "A role for a proxy borrower who can return items on behalf of an Undergraduate."
+
+        speech act proxy_return_item(loan: Loan) {
+
+        } emits ItemReturned
     }
 
     role Postgraduate {
